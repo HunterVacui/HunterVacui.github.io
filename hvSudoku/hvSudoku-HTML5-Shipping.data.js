@@ -173,6 +173,6 @@ Module['FS_createPath']('/hvSudoku/Content', 'Paks', true, true);
   }
 
  }
- loadPackage({"files": [{"start": 0, "audio": 0, "end": 53, "filename": "/Manifest_NonUFSFiles_HTML5.txt"}, {"start": 53, "audio": 0, "end": 89, "filename": "/UE4CommandLine.txt"}, {"start": 89, "audio": 0, "end": 15479855, "filename": "/hvSudoku/Content/Paks/hvSudoku-HTML5.pak"}], "remote_package_size": 15479855, "package_uuid": "7fd52447-6d33-4b0f-b5b4-5d217bc25389"});
+ loadPackage({"files": [{"start": 0, "audio": 0, "end": 53, "filename": "/Manifest_NonUFSFiles_HTML5.txt"}, {"start": 53, "audio": 0, "end": 89, "filename": "/UE4CommandLine.txt"}, {"start": 89, "audio": 0, "end": 16430233, "filename": "/hvSudoku/Content/Paks/hvSudoku-HTML5.pak"}], "remote_package_size": 16430233, "package_uuid": "7672f789-c451-4f88-aff0-2ba0490225d0"});
 
 })();
