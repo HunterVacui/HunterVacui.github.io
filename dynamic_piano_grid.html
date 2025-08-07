@@ -310,7 +310,7 @@
                 this.currentBaseFreq = 440; // A4
                 this.currentNoteName = 'A4';
                 this.currentCenterPosition = 40; // Center of 9x9 grid (5th row, 5th column, 0-indexed)
-                this.recenterMode = false;
+                this.recenterMode = true;
                 this.activeOscillators = new Map();
                 this.grid = document.getElementById('pianoGrid');
                 this.elevensBar = document.getElementById('elevensBar');
@@ -671,8 +671,6 @@
                     this.currentCenterPosition = position;
                     this.updateCenterKey();
                     this.updateDisplay();
-                    // Turn off recenter mode after use
-                    this.recenterMode = false;
                 }
 
                 // Visual feedback
