@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Piano Grid 5x5</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+        }
+
+        .container {
+            max-width: 700px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .piano-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 30px;
+            aspect-ratio: 1;
+        }
+
+        .key {
+            border: 2px solid #888;
+            border-radius: 12px;
+            font-size: 0.9em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            user-select: none;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .key:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+            border-color: #aaa;
+        }
+
+        .key:active, .key.active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            border-color: #4CAF50;
+            border-width: 3px;
+        }
+
+        .key.center {
+            border-color: #FFD700;
+            border-width: 3px;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .interval {
+            font-size: 0.7em;
+            opacity: 0.9;
+        }
+
+        .note-name {
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .frequency {
+            font-size: 0.6em;
+            opacity: 0.7;
+            margin-top: 2px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        input[type="range"] {
+            width: 120px;
+        }
+
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .note-info {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.inner {
+            background: #4CAF50;
+        }
+
+        .legend-dot.outer {
+            background: #FF5722;
+        }
+
+        .legend-dot.center {
+            background: #FFD700;
+        }
+
+        @media (max-width: 700px) {
+            .piano-grid {
+                gap: 6px;
+            }
+            
+            .key {
+                font-size: 0.8em;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+
+            .legend {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎹 Dynamic Piano Grid 5×5</h1>
+        
+        <div class="note-info" id="noteInfo">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                <button id="centerButton" style="background: rgba(255,215,0,0.2); border: 2px solid #FFD700; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    Current Center: A4 (440.00 Hz) - Click to Reset
+                </button>
+                <button id="recenterToggle" style="background: rgba(76,175,80,0.2); border: 2px solid #4CAF50; color: white; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    Recenter Mode: OFF
+                </button>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-dot center"></div>
+                <span>Current Center Note</span>
+            </div>
+            <div class="legend-item">
+                <span>💡 Click to play • Toggle recenter mode to change center</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="volume">Volume</label>
+                <input type="range" id="volume" min="0" max="1" step="0.1" value="0.3">
+            </div>
+            <div class="control-group">
+                <label for="waveform">Waveform</label>
+                <select id="waveform">
+                    <option value="sawtooth">Sawtooth</option>
+                    <option value="square">Square</option>
+                    <option value="sine">Sine</option>
+                    <option value="triangle">Triangle</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="attack">Attack (ms)</label>
+                <input type="range" id="attack" min="1" max="200" value="50">
+            </div>
+            <div class="control-group">
+                <label for="decay">Decay (ms)</label>
+                <input type="range" id="decay" min="50" max="2000" value="1000">
+            </div>
+        </div>
+
+        <div class="piano-grid" id="pianoGrid">
+            <!-- Grid will be generated by JavaScript -->
+        </div>
+
+        <div class="instructions">
+            <h3>How to Play</h3>
+            <p>• <strong>Click</strong> any key to play its note</p>
+            <p>• <strong>Toggle recenter mode</strong> and then click a key to make it the new center</p>
+            <p>• <strong>Center button (gold)</strong>: Click to reset to A4 (440 Hz)</p>
+            <p>• Use mouse/touch or keyboard (1-5, Q-T, A-G, Z-B, Y-P)</p>
+            <p>• Colors represent frequency: darker = lower, brighter = higher</p>
+            <p>• Explore infinite musical space by recentering!</p>
+        </div>
+
+        <div class="copyright">
+            Copyright (c) 2025 vacui.dev, all rights reserved
+        </div>
+    </div>
+
+    <script>
+        class DynamicPiano5x5 {
+            constructor() {
+                this.audioContext = null;
+                this.currentBaseFreq = 440; // A4
+                this.currentNoteName = 'A4';
+                this.recenterMode = false;
+                this.activeOscillators = new Map();
+                this.grid = document.getElementById('pianoGrid');
+                this.noteInfo = document.getElementById('noteInfo');
+                
+                this.minFreq = 27.5; // A0
+                this.maxFreq = 4186; // C8
+
+                // 5x5 grid layout with frequency multipliers
+                // 0-4: outer top row, 5-9: inner+outer row, 10-14: inner+center+inner row, etc.
+                this.setupGrid();
+                
+                this.initAudio();
+                this.updateDisplay();
+                this.bindEvents();
+            }
+
+            setupGrid() {
+                // Create 25 buttons
+                this.grid.innerHTML = '';
+                for (let i = 0; i < 25; i++) {
+                    const key = document.createElement('div');
+                    key.className = 'key';
+                    key.dataset.position = i.toString();
+                    this.grid.appendChild(key);
+                }
+
+                this.keys = document.querySelectorAll('.key');
+
+                // All keys are now standard - no more inner/outer distinction
+                this.recenterMode = false;
+
+                // Frequency multipliers for each position relative to center (position 12)
+                this.multipliers = [
+                    // Row 0 (top outer)
+                    8/3,  9/2,    4,     5,   6,
+                    // Row 1 
+                    5/7,   4/3,  2,     3,     9/2,
+                    // Row 2 (center row)
+                    4/9,   2/3,  1,     3/2,   9/4,
+                    // Row 3
+                    2/9,   1/3,  1/2,   3/4,   7/5,
+                    // Row 4 (bottom outer)
+                    1/6,   1/5,  1/4,   2/9,   3/8
+                ];
+
+                // Interval names
+                this.intervalNames = [
+                    'M6+2Oct', 'Oct↑', 'P5+Oct', 'P5+2Oct', 'M6+3Oct',
+                    'P5↓', 'P4↑', 'Oct↑', 'P5+Oct', 'P5+2Oct',
+                    'M6↓', 'P5↓', 'Root', 'P5↑', 'M6↑',
+                    'M6-2Oct', 'M6↓', 'Oct↓', 'P4↓', 'M2↑',
+                    'm3-2Oct', 'M6-2Oct', 'P5-Oct', 'Oct↓', 'P4↓'
+                ];
+
+                // Apply center class only to position 12
+                this.keys.forEach((key, index) => {
+                    if (index === 12) {
+                        key.classList.add('center');
+                    }
+                });
+            }
+
+            getFrequencyColor(freq) {
+                // Exponential scale from minFreq to maxFreq
+                const logMin = Math.log(this.minFreq);
+                const logMax = Math.log(this.maxFreq);
+                const logFreq = Math.log(Math.max(this.minFreq, Math.min(this.maxFreq, freq)));
+                
+                const intensity = (logFreq - logMin) / (logMax - logMin);
+                const colorValue = Math.floor(intensity * 255);
+                
+                // Use HSL for better color distribution
+                const hue = intensity * 280; // From red-purple to blue
+                const saturation = 70;
+                const lightness = 20 + intensity * 60; // 20% to 80%
+                
+                return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+            }
+
+            getTextColor(freq) {
+                const logMin = Math.log(this.minFreq);
+                const logMax = Math.log(this.maxFreq);
+                const logFreq = Math.log(Math.max(this.minFreq, Math.min(this.maxFreq, freq)));
+                const intensity = (logFreq - logMin) / (logMax - logMin);
+                
+                return intensity > 0.5 ? '#000' : '#fff';
+            }
+
+            async initAudio() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    if (this.audioContext.state === 'suspended') {
+                        await this.audioContext.resume();
+                    }
+                } catch (e) {
+                    console.error('Audio context initialization failed:', e);
+                }
+            }
+
+            getNoteName(frequency) {
+                const A4 = 440;
+                const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                
+                const semitonesFromA4 = Math.round(12 * Math.log2(frequency / A4));
+                const octave = Math.floor((semitonesFromA4 + 9) / 12) + 4;
+                const noteIndex = ((semitonesFromA4 + 9) % 12 + 12) % 12;
+                const noteName = noteNames[noteIndex];
+                
+                return `${noteName}${octave}`;
+            }
+
+            updateDisplay() {
+                this.keys.forEach((key, index) => {
+                    const freq = Math.max(this.minFreq, Math.min(this.maxFreq, this.currentBaseFreq * this.multipliers[index]));
+                    const noteName = this.getNoteName(freq);
+                    const intervalName = this.intervalNames[index];
+                    const bgColor = this.getFrequencyColor(freq);
+                    const textColor = this.getTextColor(freq);
+                    
+                    key.style.backgroundColor = bgColor;
+                    key.style.color = textColor;
+                    
+                    key.innerHTML = `
+                        <div class="interval">${intervalName}</div>
+                        <div class="note-name">${noteName}</div>
+                        <div class="frequency">${freq.toFixed(1)}Hz</div>
+                    `;
+                });
+
+                // Update center button text
+                const centerButton = document.getElementById('centerButton');
+                centerButton.textContent = `Current Center: ${this.currentNoteName} (${this.currentBaseFreq.toFixed(2)} Hz) - Click to Reset`;
+                
+                // Update recenter toggle button
+                const recenterToggle = document.getElementById('recenterToggle');
+                recenterToggle.textContent = `Recenter Mode: ${this.recenterMode ? 'ON' : 'OFF'}`;
+                recenterToggle.style.background = this.recenterMode ? 'rgba(255,152,0,0.3)' : 'rgba(76,175,80,0.2)';
+                recenterToggle.style.borderColor = this.recenterMode ? '#FF9800' : '#4CAF50';
+            }
+
+            async playNote(position) {
+                if (!this.audioContext) {
+                    await this.initAudio();
+                }
+
+                const frequency = Math.max(this.minFreq, Math.min(this.maxFreq, this.currentBaseFreq * this.multipliers[position]));
+                const volume = document.getElementById('volume').value;
+                const waveform = document.getElementById('waveform').value;
+                const attack = parseInt(document.getElementById('attack').value) / 1000;
+                const decay = parseInt(document.getElementById('decay').value) / 1000;
+
+                // Stop any existing note for this position
+                if (this.activeOscillators.has(position)) {
+                    this.stopNote(position);
+                }
+
+                // Create oscillator and gain node
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.type = waveform;
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                
+                // Envelope: attack and decay
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(volume, this.audioContext.currentTime + attack);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + attack + decay);
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.start();
+                oscillator.stop(this.audioContext.currentTime + attack + decay + 0.1);
+
+                this.activeOscillators.set(position, { oscillator, gainNode });
+
+                // Clean up after note ends
+                oscillator.onended = () => {
+                    this.activeOscillators.delete(position);
+                };
+
+                // Update center frequency if recenter mode is on
+                if (this.recenterMode) {
+                    this.currentBaseFreq = frequency;
+                    this.currentNoteName = this.getNoteName(frequency);
+                    // Update center class
+                    this.keys.forEach(k => k.classList.remove('center'));
+                    this.keys[position].classList.add('center');
+                    this.updateDisplay();
+                    // Turn off recenter mode after use
+                    this.recenterMode = false;
+                }
+
+                // Visual feedback
+                const key = this.keys[position];
+                key.classList.add('active');
+                setTimeout(() => key.classList.remove('active'), 200);
+            }
+
+            stopNote(position) {
+                if (this.activeOscillators.has(position)) {
+                    const { oscillator, gainNode } = this.activeOscillators.get(position);
+                    gainNode.gain.cancelScheduledValues(this.audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(gainNode.gain.value, this.audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+                    oscillator.stop(this.audioContext.currentTime + 0.1);
+                    this.activeOscillators.delete(position);
+                }
+            }
+
+            bindEvents() {
+                // Center button to reset to A4
+                const centerButton = document.getElementById('centerButton');
+                centerButton.addEventListener('click', () => {
+                    this.currentBaseFreq = 440; // A4
+                    this.currentNoteName = 'A4';
+                    // Reset center to position 12
+                    this.keys.forEach(k => k.classList.remove('center'));
+                    this.keys[12].classList.add('center');
+                    this.updateDisplay();
+                });
+
+                // Recenter mode toggle
+                const recenterToggle = document.getElementById('recenterToggle');
+                recenterToggle.addEventListener('click', () => {
+                    this.recenterMode = !this.recenterMode;
+                    this.updateDisplay();
+                });
+
+                // Key events
+                this.keys.forEach((key, index) => {
+                    key.addEventListener('click', () => this.playNote(index));
+                });
+
+                // Keyboard events
+                document.addEventListener('keydown', (e) => {
+                    const keyMap = {
+                        // Top row
+                        'Digit1': 0, 'Digit2': 1, 'Digit3': 2, 'Digit4': 3, 'Digit5': 4,
+                        // Second row  
+                        'KeyQ': 5, 'KeyW': 6, 'KeyE': 7, 'KeyR': 8, 'KeyT': 9,
+                        // Third row (center)
+                        'KeyA': 10, 'KeyS': 11, 'KeyD': 12, 'KeyF': 13, 'KeyG': 14,
+                        // Fourth row
+                        'KeyZ': 15, 'KeyX': 16, 'KeyC': 17, 'KeyV': 18, 'KeyB': 19,
+                        // Fifth row
+                        'KeyY': 20, 'KeyU': 21, 'KeyI': 22, 'KeyO': 23, 'KeyP': 24
+                    };
+
+                    if (keyMap.hasOwnProperty(e.code)) {
+                        e.preventDefault();
+                        this.playNote(keyMap[e.code]);
+                    }
+                });
+
+                // Touch events for mobile
+                this.keys.forEach((key, index) => {
+                    key.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.playNote(index);
+                    });
+                });
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new DynamicPiano5x5();
+        });
+
+        // Handle audio context resume on user interaction
+        document.addEventListener('click', async () => {
+            if (window.audioContext && window.audioContext.state === 'suspended') {
+                await window.audioContext.resume();
+            }
+        }, { once: true });
+    </script>
+</body>
+</html>
