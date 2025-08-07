@@ -298,7 +298,7 @@
                 }
 
                 this.keys = document.querySelectorAll('.key');
-                
+
                 this.multipliers = [
                       7/4,   11/3, 10/7,  8/3,   3, 10/3,    6,   8,     9,
                      16/15,   5/4, 13/8,    0,   2, 10/9,    0,   4,     7,
@@ -309,6 +309,20 @@
                       1/5,     0,   3/5,  5/8, 1/2,  3/5,  7/5,  8/11,   4,
                       1/7,    1/4,   0,  9/10, 1/3,   0,   8/13, 8/6,  15/16,
                       1/9,    1/8,  1/6,  1/3, 1/4,  3/8,  7/10, 4/5,   4/7,
+                ];
+                // missing: 16/15, 32/25, 40/27
+                // 10/3, 3/10, 9/10, 10/9, 5/9, 9/5
+                // 7/12, 5/12, 12/7, 12/5
+                this.multipliers = [
+                       1,  11/9, 11/8,  11/7, 11/6, 11/5, 11/3, 11/2,   9/1, 
+                    9/11,     0,  6/5,   5/2, 8/5,   8/3,  5/1,  9/2,   8/1, 
+                    8/11,   5/6,    0,   5/4, 9/4,   7/2,  4/1, 11/4,   7/1, 
+                    7/11,   2/5,  4/5,     0, 9/7,   2/1,  9/8,  3/1,   6/1, 
+                    6/11,   5/8,  4/9,   7/9, 1/1,   4/3,  3/2,  5/3,  15/8, 
+                    5/11,   3/8,  2/7,   1/2, 3/4,     0,  7/5,  7/4,   7/3, 
+                    3/11,   1/5,  1/4,  8/9, 2/3,   5/7,    0, 10/7,   8/7, 
+                    2/11,   2/9,  4/11,   1/3, 3/5,   4/7, 7/10,    0,   6/7, 
+                     1/9,   1/8,  1/7,   1/6, 8/15,  3/7,  7/8,  7/6,     0, 
                 ];
 
                 // Apply center class to the current center position
@@ -469,13 +483,35 @@
             getNoteName(frequency) {
                 const A4 = 440;
                 const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-                
-                const semitonesFromA4 = Math.round(12 * Math.log2(frequency / A4));
-                const octave = Math.floor((semitonesFromA4 + 9) / 12) + 4;
-                const noteIndex = ((semitonesFromA4 + 9) % 12 + 12) % 12;
-                const noteName = noteNames[noteIndex];
-                
-                return `${noteName}${octave}`;
+
+                // Calculate semitone distance from A4 (can be fractional)
+                const semitonesFromA4 = 12 * Math.log2(frequency / A4);
+
+                // Round to nearest semitone for exact match check
+                const nearestSemitone = Math.round(semitonesFromA4);
+                const exactFrequency = A4 * Math.pow(2, nearestSemitone / 12);
+
+                // Tight tolerance for exact match
+                if (Math.abs(frequency - exactFrequency) < 1) {
+                    const noteIndex = ((nearestSemitone + 9) % 12 + 12) % 12;
+                    const octave = Math.floor((nearestSemitone + 9) / 12) + 4;
+                    return `${noteNames[noteIndex]}${octave}`;
+                }
+
+                // Not exact — find bounding notes
+                const lowerSemitone = Math.floor(semitonesFromA4);
+                const upperSemitone = lowerSemitone + 1;
+
+                const lowerNoteIndex = ((lowerSemitone + 9) % 12 + 12) % 12;
+                const upperNoteIndex = ((upperSemitone + 9) % 12 + 12) % 12;
+
+                const lowerOctave = Math.floor((lowerSemitone + 9) / 12) + 4;
+                const upperOctave = Math.floor((upperSemitone + 9) / 12) + 4;
+
+                const lowerNote = `${noteNames[lowerNoteIndex]}${lowerOctave}`;
+                const upperNote = `${noteNames[upperNoteIndex]}${upperOctave}`;
+
+                return `${lowerNote}–${upperNote}`;
             }
 
             updateDisplay() {
