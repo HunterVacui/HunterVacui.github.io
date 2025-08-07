@@ -682,10 +682,14 @@
 
             async playNote(position) {
                 const { ratio } = this.getPositionRatio(position);
-                const frequency = this.currentBaseFreq * ratio;
-                
                 // Don't play inactive keys
-                if (frequency < this.minFreq || frequency > this.maxFreq) {
+                if (ratio === 0) {
+                    return;
+                }
+
+                // don't play out-of-bounds keys on the main grid
+                const frequency = this.currentBaseFreq * ratio;
+                if (typeof position !== 'string' && (frequency < this.minFreq || frequency > this.maxFreq)) {
                     return;
                 }
 
