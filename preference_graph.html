@@ -272,25 +272,71 @@
 
         function getPreferenceColor(score) {
             if (score < 0.25) {
-                // Red to gray (0 to 0.25)
-                const t = score * 2.5; // 0 to 1
+                const t = score * 2.5;
                 return d3.interpolateRgb("#c90011", "#727272")(t);
             } else if (score < 0.5) {
-                return "#727272"; // Gray for neutral
+                return "#727272";
             } else if (score < 0.9) {
-                // Gray to green (0.5 to 0.9)
-                const t = (score - 0.5) * 2.5; // 0 to 1
+                const t = (score - 0.5) * 2.5;
                 return d3.interpolateRgb("#727272", "#0eff67")(t);
             }
-            return "#0eff67"; // green
+            return "#0eff67";
+        }
+
+        // NEW: Calculate both strength and count of preferences
+        function calculateNodePreference(node, nodes) {
+            let positiveCount = 0;
+            let negativeCount = 0;
+            let positiveStrength = 0;
+            let negativeStrength = 0;
+            let totalConnections = 0;
+            
+            node.edges.forEach(edge => {
+                const targetNode = nodes.find(n => n.key === edge.to_key);
+                if (targetNode) {
+                    const reverseEdge = targetNode.edges.find(e => e.to_key === node.key);
+                    if (reverseEdge) {
+                        const netPreference = edge.score - reverseEdge.score;
+                        
+                        if (netPreference > 0.1) { // Significant preference
+                            positiveCount++;
+                            positiveStrength += netPreference;
+                        } else if (netPreference < -0.1) { // Significant dispreference
+                            negativeCount++;
+                            negativeStrength += Math.abs(netPreference);
+                        }
+                        
+                        totalConnections++;
+                    }
+                }
+            });
+            
+            // Calculate weighted preference score
+            const preferenceScore = (positiveStrength - negativeStrength) / Math.max(1, totalConnections);
+            
+            // Calculate intensity based on number of strong preferences
+            const intensity = Math.min(1, (positiveCount + negativeCount) / Math.max(1, totalConnections));
+            
+            return {
+                score: preferenceScore,
+                intensity: intensity,
+                positiveCount: positiveCount,
+                negativeCount: negativeCount
+            };
         }
 
         function processPreferenceData(data, labels = null) {
             const nodes = data.nodes.map(node => ({
                 id: node.key,
                 label: labels && labels[node.key] ? labels[node.key] : node.key,
-                edges: node.edges
+                edges: node.edges,
+                rawNode: node
             }));
+
+            // Calculate preference for each node
+            nodes.forEach(node => {
+                Object.assign(node, calculateNodePreference(node.rawNode, data.nodes));
+            });
 
             const links = [];
             const processedPairs = new Set();
@@ -343,10 +389,15 @@
 
             // Create force simulation
             simulation = d3.forceSimulation(nodes)
-                .force("link", d3.forceLink(links).id(d => d.id).distance(200))
-                .force("charge", d3.forceManyBody().strength(-50))
+                .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+                .force("charge", d3.forceManyBody().strength(-500))
                 .force("center", d3.forceCenter(width / 2, height / 2))
-                .force("collision", d3.forceCollide().radius(40));
+                .force("collision", d3.forceCollide().radius(60))
+                .force("y", d3.forceY().y(d => {
+                    // Position based on preference score
+                    return height * (0.5 + d.score * 0.4);
+                }).strength(0.1))
+                .force("x", d3.forceX(width / 2).strength(0.05));
 
             // Create gradient definitions for links
             const defs = svg.append("defs");
@@ -373,7 +424,7 @@
                 .append("line")
                 .attr("class", "link")
                 .attr("stroke", (d, i) => `url(#gradient-${i})`)
-                .attr("stroke-width", d => 2 + d.strength * 6)
+                .attr("stroke-width", d => 2 + d.strength * 4)
                 .on("mouseover", function(event, d) {
                     const sourceNode = nodes.find(n => n.id === d.source.id);
                     const targetNode = nodes.find(n => n.id === d.target.id);
@@ -383,7 +434,10 @@
                             <strong>${sourceNode.label} → ${targetNode.label}</strong><br/>
                             Preference: ${(d.sourceScore * 100).toFixed(1)}%<br/>
                             <strong>${targetNode.label} → ${sourceNode.label}</strong><br/>
-                            Preference: ${(d.targetScore * 100).toFixed(1)}%
+                            Preference: ${(d.targetScore * 100).toFixed(1)}%<br/><br/>
+                            <strong>${sourceNode.label} summary:</strong><br/>
+                            ${sourceNode.positiveCount} strong preferences<br/>
+                            ${sourceNode.negativeCount} strong dispreferences
                         `)
                         .style("left", (event.pageX + 10) + "px")
                         .style("top", (event.pageY - 10) + "px");
@@ -392,17 +446,25 @@
                     tooltip.style("display", "none");
                 });
 
-            // Create nodes
+            // Create nodes with intensity-based coloring
             const node = svg.append("g")
                 .selectAll("circle")
                 .data(nodes)
                 .enter()
                 .append("circle")
                 .attr("class", "node")
-                .attr("r", 25)
-                .attr("fill", "#4ecdc4")
+                .attr("r", 20)
+                .attr("fill", d => {
+                    // Color nodes based on both direction and intensity of preference
+                    if (d.score < -0.1) {
+                        return d3.interpolateRgb("#ffffff", "#ff6b6b")(d.intensity * 0.8 + 0.2);
+                    } else if (d.score > 0.1) {
+                        return d3.interpolateRgb("#ffffff", "#4ecdc4")(d.intensity * 0.8 + 0.2);
+                    }
+                    return "#727272";
+                })
                 .attr("stroke", "#ffffff")
-                .attr("stroke-width", 3)
+                .attr("stroke-width", 2)
                 .call(d3.drag()
                     .on("start", dragstarted)
                     .on("drag", dragged)
