@@ -249,6 +249,15 @@
 
         // Sample data from your pizza poll
         const sampleData = {
+            "labels" : {
+                "0": "cheese",
+                "1": "pineapple", 
+                "2": "fish",
+                "3": "bacon",
+                "4": "sausage",
+                "5": "chorizo",
+                "6": "pepperoni"
+            },
             "nodes": [
                 {"key": "0", "edges": [{"to_key": "1", "score": 0.5}, {"to_key": "2", "score": 0.9993164871097749}, {"to_key": "3", "score": 0.5}, {"to_key": "4", "score": 0.5}, {"to_key": "5", "score": 0.5}, {"to_key": "6", "score": 0.5}]},
                 {"key": "1", "edges": [{"to_key": "0", "score": 0.5}, {"to_key": "2", "score": 1}, {"to_key": "3", "score": 0.5}, {"to_key": "4", "score": 0.5}, {"to_key": "5", "score": 0.5}, {"to_key": "6", "score": 0.0009633674836833858}]},
@@ -258,16 +267,6 @@
                 {"key": "5", "edges": [{"to_key": "0", "score": 0.5}, {"to_key": "1", "score": 0.5}, {"to_key": "2", "score": 0.8655292738623376}, {"to_key": "3", "score": 0.23050839855509397}, {"to_key": "4", "score": 0.23050839855509397}, {"to_key": "6", "score": 0.5}]},
                 {"key": "6", "edges": [{"to_key": "0", "score": 0.5}, {"to_key": "1", "score": 0.9990366325163166}, {"to_key": "2", "score": 1.0}, {"to_key": "3", "score": 0.5}, {"to_key": "4", "score": 0.5}, {"to_key": "5", "score": 0.5}]}
             ]
-        };
-
-        const pizzaLabels = {
-            "0": "cheese",
-            "1": "pineapple", 
-            "2": "fish",
-            "3": "bacon",
-            "4": "sausage",
-            "5": "chorizo",
-            "6": "pepperoni"
         };
 
         function getPreferenceColor(score) {
@@ -376,7 +375,8 @@
             return { nodes, links };
         }
 
-        function renderGraph(data, labels = null) {
+        function renderGraph(data) {
+            labels = data['labels']
             const { nodes, links } = processPreferenceData(data, labels);
             
             // Clear previous graph
@@ -529,7 +529,7 @@
         }
 
         function loadSampleData() {
-            renderGraph(sampleData, pizzaLabels);
+            renderGraph(sampleData);
         }
 
         function parseDataFromText(text) {
@@ -540,7 +540,7 @@
                 // Try to extract JSON from DOT file
                 const rawDataMatch = text.match(/=====================RAW DATA==========([\s\S]*?)$/);
                 if (rawDataMatch) {
-                    const jsonText = rawDataMatch[1].trim().replace(/'/g, '"');
+                    const jsonText = rawDataMatch[1].trim();
                     return JSON.parse(jsonText);
                 }
                 throw new Error("Could not parse data format");
