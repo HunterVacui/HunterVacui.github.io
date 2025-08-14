@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Preference Graph Visualizer</title>
+    <title>Preference Graph Visualizer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <style>
         * {
@@ -14,32 +14,29 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             min-height: 100vh;
-            padding: 20px;
+            color: white;
         }
 
         .container {
             max-width: 1400px;
             margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            padding: 20px;
         }
 
         .header {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white;
-            padding: 30px;
             text-align: center;
+            margin-bottom: 30px;
         }
 
         .header h1 {
             font-size: 2.5rem;
             margin-bottom: 10px;
-            font-weight: 700;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .header p {
@@ -48,227 +45,209 @@
         }
 
         .controls {
-            padding: 30px;
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .input-section {
-            margin-bottom: 25px;
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-right: 20px;
         }
 
-        .input-section label {
-            display: block;
-            font-weight: 600;
-            color: #374151;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
-        }
-
-        .input-section textarea {
+        .file-input {
+            position: absolute;
+            opacity: 0;
             width: 100%;
-            padding: 15px;
-            border: 2px solid #e5e7eb;
-            border-radius: 12px;
-            font-size: 14px;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            transition: all 0.3s ease;
-            resize: vertical;
-            min-height: 150px;
+            height: 100%;
+            cursor: pointer;
         }
 
-        .input-section textarea:focus {
-            outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        .button-group {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
+        .file-input-label {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
             padding: 12px 24px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
+            border-radius: 25px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 16px;
+            border: none;
+            font-weight: 600;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #4f46e5, #7c3aed);
-            color: white;
-        }
-
-        .btn-primary:hover {
+        .file-input-label:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
-        }
-
-        .btn-secondary {
-            background: #6b7280;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #4b5563;
-            transform: translateY(-2px);
-        }
-
-        .visualization {
-            position: relative;
-            background: white;
-            min-height: 600px;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
         }
 
         .legend {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            font-size: 14px;
-            z-index: 10;
-        }
-
-        .legend h3 {
-            margin-bottom: 15px;
-            color: #374151;
-            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-top: 15px;
+            flex-wrap: wrap;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            margin-bottom: 8px;
+            gap: 10px;
         }
 
-        .legend-color {
-            width: 20px;
-            height: 3px;
-            margin-right: 10px;
+        .legend-line {
+            width: 40px;
+            height: 4px;
             border-radius: 2px;
         }
 
-        .node-info {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-width: 300px;
-            z-index: 10;
-            display: none;
+        .graph-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
         }
 
-        .error {
-            background: #fee2e2;
-            color: #dc2626;
+        #graph {
+            width: 100%;
+            height: 70vh;
+            min-height: 500px;
+        }
+
+        .info-panel {
+            background: rgba(0, 0, 0, 0.3);
             padding: 15px;
-            border-radius: 10px;
-            margin: 20px;
-            border-left: 4px solid #dc2626;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
         }
 
-        .sample-data {
-            background: #f0f9ff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border-left: 4px solid #0ea5e9;
+        .node {
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .sample-data h4 {
-            color: #0c4a6e;
-            margin-bottom: 10px;
+        .node:hover {
+            stroke-width: 4px;
         }
 
-        .sample-data pre {
+        .node-label {
+            text-anchor: middle;
+            dominant-baseline: middle;
             font-size: 12px;
-            color: #374151;
-            overflow-x: auto;
+            font-weight: 600;
+            pointer-events: none;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
         }
 
-        @media (max-width: 768px) {
-            .controls {
-                padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .legend {
-                position: relative;
-                margin: 20px;
-                top: auto;
-                right: auto;
-            }
+        .link {
+            stroke-width: 3;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .link:hover {
+            opacity: 1;
+            stroke-width: 5;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            pointer-events: none;
+            font-size: 12px;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .footer p {
+            margin: 5px 0;
+        }
+
+        .sample-button {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .sample-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(78, 205, 196, 0.3);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🧠 LLM Preference Graph Visualizer</h1>
-            <p>Transform complex preference data into beautiful, interactive visualizations</p>
+            <h1>🎯 Preference Graph Visualizer</h1>
+            <p>Explore AI preferences through interactive network visualization</p>
         </div>
-        
+
         <div class="controls">
-            <div class="input-section">
-                <label for="dataInput">Paste your preference graph data (JSON format):</label>
-                <textarea id="dataInput" placeholder="Paste your JSON data here..."></textarea>
-                
-                <div class="sample-data">
-                    <h4>📝 Sample Data Format:</h4>
-                    <pre>{"nodes": [{"key": "option1", "edges": [{"to_key": "option2", "score": 0.8}]}, ...]}</pre>
-                </div>
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" class="file-input" accept=".dot,.json">
+                <label for="fileInput" class="file-input-label">📁 Load Preference Data</label>
             </div>
-            
-            <div class="button-group">
-                <button class="btn btn-primary" onclick="visualizeData()">🎨 Visualize Graph</button>
-                <button class="btn btn-secondary" onclick="loadSampleData()">📊 Load Sample Data</button>
-                <button class="btn btn-secondary" onclick="clearVisualization()">🗑️ Clear</button>
+            <button class="sample-button" onclick="loadSampleData()">🍕 Load Pizza Sample</button>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-line" style="background: linear-gradient(to right, #c90011, #0eff66);"></div>
+                    <span>Strong Preference (Red → Green)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line" style="background: linear-gradient(to right, #727272, #0eff67);"></div>
+                    <span>Weak Preference (Gray → Green)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-line" style="background: #747d8c;"></div>
+                    <span>No Preference (Gray, Hidden by Default)</span>
+                </div>
             </div>
         </div>
-        
-        <div class="visualization" id="visualization">
-            <div class="legend">
-                <h3>Legend</h3>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: linear-gradient(to right, #ef4444, #22c55e);"></div>
-                    <span>Preference Gradient (Red=Dislike, Green=Like)</span>
-                </div>
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #6b7280;"></div>
-                    <span>Neutral Preference (~50%)</span>
-                </div>
-                <div class="legend-item">
-                    <div style="width: 20px; height: 8px; margin-right: 10px; background: #4f46e5; border-radius: 2px;"></div>
-                    <span>Thicker = Stronger Preference</span>
-                </div>
+
+        <div class="graph-container">
+            <svg id="graph"></svg>
+            <div class="info-panel">
+                <p id="graphInfo">Load preference data to see the visualization</p>
             </div>
-            
-            <div class="node-info" id="nodeInfo">
-                <h4>Node Information</h4>
-                <div id="nodeDetails"></div>
-            </div>
+        </div>
+
+        <div class="footer">
+            <p>Vibecoded with AI</p>
+            <p>Copyright © 2025 vacui.dev, all rights reserved</p>
         </div>
     </div>
 
-    <script>
-        let currentData = null;
-        let svg = null;
-        let simulation = null;
+    <div class="tooltip" id="tooltip" style="display: none;"></div>
 
+    <script>
+        const svg = d3.select("#graph");
+        const tooltip = d3.select("#tooltip");
+        let simulation;
+
+        // Sample data from your pizza poll
         const sampleData = {
             "nodes": [
                 {"key": "0", "edges": [{"to_key": "1", "score": 0.5}, {"to_key": "2", "score": 0.9993164871097749}, {"to_key": "3", "score": 0.5}, {"to_key": "4", "score": 0.5}, {"to_key": "5", "score": 0.5}, {"to_key": "6", "score": 0.5}]},
@@ -281,7 +260,7 @@
             ]
         };
 
-        const labelMap = {
+        const pizzaLabels = {
             "0": "cheese",
             "1": "pineapple", 
             "2": "fish",
@@ -291,335 +270,251 @@
             "6": "pepperoni"
         };
 
-        function loadSampleData() {
-            document.getElementById('dataInput').value = JSON.stringify(sampleData, null, 2);
-        }
-
-        function clearVisualization() {
-            document.getElementById('dataInput').value = '';
-            d3.select('#visualization svg').remove();
-            document.getElementById('nodeInfo').style.display = 'none';
-        }
-
-        function showError(message) {
-            const viz = document.getElementById('visualization');
-            viz.innerHTML = `
-                <div class="legend">
-                    <h3>Legend</h3>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #22c55e;"></div>
-                        <span>Strong Preference (0.7-1.0)</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #f59e0b;"></div>
-                        <span>Moderate Preference (0.6-0.7)</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #6b7280;"></div>
-                        <span>Weak Preference (0.5-0.6)</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #ddd; border: 1px dashed #999;"></div>
-                        <span>No Preference (0.5)</span>
-                    </div>
-                </div>
-                <div class="node-info" id="nodeInfo">
-                    <h4>Node Information</h4>
-                    <div id="nodeDetails"></div>
-                </div>
-                <div class="error">${message}</div>
-            `;
-        }
-
-        function getEdgeColor(score) {
-            if (Math.abs(score - 0.5) < 0.001) return '#ddd';
-            if (score >= 0.7) return '#22c55e';
-            if (score >= 0.6) return '#f59e0b';
-            if (score > 0.5) return '#6b7280';
-            if (score >= 0.3) return '#ef4444';
-            return '#dc2626';
-        }
-
-        function getEdgeWidth(score) {
-            if (Math.abs(score - 0.5) < 0.001) return 1;
-            return Math.max(1, Math.abs(score - 0.5) * 8);
-        }
-
-        function getEdgeOpacity(score) {
-            if (Math.abs(score - 0.5) < 0.001) return 0.3;
-            return Math.max(0.4, Math.abs(score - 0.5) * 2);
-        }
-
-        function visualizeData() {
-            const input = document.getElementById('dataInput').value.trim();
-            if (!input) {
-                showError('Please paste your preference graph data.');
-                return;
+        function getPreferenceColor(score) {
+            if (Math.abs(score - 0.5) < 0.02) return "#747d8c"; // Gray for neutral
+            
+            // Create gradient from red (strong against) to green (strong for)
+            if (score < 0.5) {
+                // Red to orange (0 to 0.5)
+                const t = score * 2; // 0 to 1
+                return d3.interpolateRgb("#c90011", "#0eff66")(t);
+            } else {
+                // Gray to green (0.5 to 1)
+                const t = (score - 0.5) * 2; // 0 to 1
+                return d3.interpolateRgb("#727272", "#0eff67")(t);
             }
-
-            try {
-                currentData = JSON.parse(input);
-                if (!currentData.nodes || !Array.isArray(currentData.nodes)) {
-                    throw new Error('Data must have a "nodes" array.');
-                }
-            } catch (error) {
-                showError(`Invalid JSON data: ${error.message}`);
-                return;
-            }
-
-            createVisualization(currentData);
         }
 
-        function createVisualization(data) {
-            // Clear previous visualization
-            d3.select('#visualization svg').remove();
-
-            const container = d3.select('#visualization');
-            const containerRect = container.node().getBoundingClientRect();
-            const width = containerRect.width;
-            const height = Math.max(600, containerRect.height);
-
-            svg = container.append('svg')
-                .attr('width', width)
-                .attr('height', height);
-
-            // Create nodes array for D3
+        function processPreferenceData(data, labels = null) {
             const nodes = data.nodes.map(node => ({
                 id: node.key,
-                label: labelMap[node.key] || node.key,
-                originalKey: node.key
+                label: labels && labels[node.key] ? labels[node.key] : node.key,
+                edges: node.edges
             }));
 
-            // Create unique bidirectional links (avoid duplicates)
-            const linkMap = new Map();
             const links = [];
-            
-            data.nodes.forEach(node => {
+            const processedPairs = new Set();
+
+            // Create links, avoiding duplicates
+            nodes.forEach(node => {
                 node.edges.forEach(edge => {
-                    const key1 = `${node.key}-${edge.to_key}`;
-                    const key2 = `${edge.to_key}-${node.key}`;
+                    const pairKey = [node.id, edge.to_key].sort().join('-');
                     
-                    if (!linkMap.has(key1) && !linkMap.has(key2)) {
-                        // Find the reverse edge to get both scores
-                        const reverseNode = data.nodes.find(n => n.key === edge.to_key);
-                        const reverseEdge = reverseNode ? reverseNode.edges.find(e => e.to_key === node.key) : null;
+                    if (!processedPairs.has(pairKey)) {
+                        processedPairs.add(pairKey);
                         
-                        links.push({
-                            source: node.key,
-                            target: edge.to_key,
-                            sourceScore: edge.score,
-                            targetScore: reverseEdge ? reverseEdge.score : 0.5,
-                            id: key1
-                        });
+                        // Find the reverse edge
+                        const targetNode = nodes.find(n => n.id === edge.to_key);
+                        const reverseEdge = targetNode ? targetNode.edges.find(e => e.to_key === node.id) : null;
                         
-                        linkMap.set(key1, true);
-                        linkMap.set(key2, true);
+                        if (reverseEdge) {
+                            // Determine which side has stronger preference
+                            const preferenceStrength = Math.abs(edge.score - 0.5);
+                            const reversePreferenceStrength = Math.abs(reverseEdge.score - 0.5);
+                            
+                            // Only show links with meaningful preferences (not neutral 0.5)
+                            if (preferenceStrength > 0.02 || reversePreferenceStrength > 0.02) {
+                                links.push({
+                                    source: node.id,
+                                    target: edge.to_key,
+                                    sourceScore: edge.score,
+                                    targetScore: reverseEdge.score,
+                                    strength: Math.max(preferenceStrength, reversePreferenceStrength)
+                                });
+                            }
+                        }
                     }
                 });
             });
 
+            return { nodes, links };
+        }
+
+        function renderGraph(data, labels = null) {
+            const { nodes, links } = processPreferenceData(data, labels);
+            
+            // Clear previous graph
+            svg.selectAll("*").remove();
+            
+            const width = svg.node().getBoundingClientRect().width;
+            const height = svg.node().getBoundingClientRect().height;
+            
+            svg.attr("viewBox", [0, 0, width, height]);
+
             // Create force simulation
             simulation = d3.forceSimulation(nodes)
-                .force('link', d3.forceLink(links).id(d => d.id).distance(120).strength(0.3))
-                .force('charge', d3.forceManyBody().strength(-400))
-                .force('center', d3.forceCenter(width / 2, height / 2))
-                .force('collision', d3.forceCollide().radius(45));
+                .force("link", d3.forceLink(links).id(d => d.id).distance(200))
+                .force("charge", d3.forceManyBody().strength(-50))
+                .force("center", d3.forceCenter(width / 2, height / 2))
+                .force("collision", d3.forceCollide().radius(40));
 
-            // Create gradient definitions
-            const defs = svg.append('defs');
+            // Create gradient definitions for links
+            const defs = svg.append("defs");
             
             links.forEach((link, i) => {
-                const gradientId = `gradient-${i}`;
-                const gradient = defs.append('linearGradient')
-                    .attr('id', gradientId)
-                    .attr('gradientUnits', 'userSpaceOnUse');
-
-                // Source side color (based on source's preference for target)
-                const sourceColor = link.sourceScore > 0.6 ? '#22c55e' : 
-                                  link.sourceScore < 0.4 ? '#ef4444' : '#6b7280';
+                const gradient = defs.append("linearGradient")
+                    .attr("id", `gradient-${i}`)
+                    .attr("gradientUnits", "userSpaceOnUse");
                 
-                // Target side color (based on target's preference for source) 
-                const targetColor = link.targetScore > 0.6 ? '#22c55e' : 
-                                  link.targetScore < 0.4 ? '#ef4444' : '#6b7280';
-
-                gradient.append('stop')
-                    .attr('offset', '0%')
-                    .attr('stop-color', sourceColor)
-                    .attr('stop-opacity', 0.8);
-
-                gradient.append('stop')
-                    .attr('offset', '100%')
-                    .attr('stop-color', targetColor)
-                    .attr('stop-opacity', 0.8);
+                gradient.append("stop")
+                    .attr("offset", "0%")
+                    .attr("stop-color", getPreferenceColor(link.sourceScore));
+                
+                gradient.append("stop")
+                    .attr("offset", "100%")
+                    .attr("stop-color", getPreferenceColor(link.targetScore));
             });
 
             // Create links
-            const link = svg.append('g')
-                .attr('class', 'links')
-                .selectAll('line')
+            const link = svg.append("g")
+                .selectAll("line")
                 .data(links)
-                .join('line')
-                .attr('stroke', (d, i) => `url(#gradient-${i})`)
-                .attr('stroke-width', d => Math.max(2, Math.max(Math.abs(d.sourceScore - 0.5), Math.abs(d.targetScore - 0.5)) * 8))
-                .style('cursor', 'pointer');
+                .enter()
+                .append("line")
+                .attr("class", "link")
+                .attr("stroke", (d, i) => `url(#gradient-${i})`)
+                .attr("stroke-width", d => 2 + d.strength * 6)
+                .on("mouseover", function(event, d) {
+                    const sourceNode = nodes.find(n => n.id === d.source.id);
+                    const targetNode = nodes.find(n => n.id === d.target.id);
+                    
+                    tooltip.style("display", "block")
+                        .html(`
+                            <strong>${sourceNode.label} → ${targetNode.label}</strong><br/>
+                            Preference: ${(d.sourceScore * 100).toFixed(1)}%<br/>
+                            <strong>${targetNode.label} → ${sourceNode.label}</strong><br/>
+                            Preference: ${(d.targetScore * 100).toFixed(1)}%
+                        `)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 10) + "px");
+                })
+                .on("mouseout", function() {
+                    tooltip.style("display", "none");
+                });
 
             // Create nodes
-            const node = svg.append('g')
-                .attr('class', 'nodes')
-                .selectAll('g')
+            const node = svg.append("g")
+                .selectAll("circle")
                 .data(nodes)
-                .join('g')
-                .style('cursor', 'pointer')
+                .enter()
+                .append("circle")
+                .attr("class", "node")
+                .attr("r", 25)
+                .attr("fill", "#4ecdc4")
+                .attr("stroke", "#ffffff")
+                .attr("stroke-width", 3)
                 .call(d3.drag()
-                    .on('start', dragstarted)
-                    .on('drag', dragged)
-                    .on('end', dragended));
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
 
-            // Add circles to nodes
-            node.append('circle')
-                .attr('r', 25)
-                .attr('fill', '#4f46e5')
-                .attr('stroke', '#fff')
-                .attr('stroke-width', 3)
-                .style('filter', 'drop-shadow(2px 2px 4px rgba(0,0,0,0.2))');
+            // Create node labels
+            const labels_g = svg.append("g")
+                .selectAll("text")
+                .data(nodes)
+                .enter()
+                .append("text")
+                .attr("class", "node-label")
+                .attr("fill", "white")
+                .text(d => d.label.length > 12 ? d.label.substring(0, 12) + "..." : d.label);
 
-            // Add labels to nodes
-            node.append('text')
-                .text(d => d.label)
-                .attr('x', 0)
-                .attr('y', 5)
-                .attr('text-anchor', 'middle')
-                .attr('fill', 'white')
-                .attr('font-size', '12px')
-                .attr('font-weight', 'bold')
-                .style('pointer-events', 'none');
-
-            // Add hover effects
-            node.on('mouseenter', function(event, d) {
-                d3.select(this).select('circle')
-                    .transition()
-                    .duration(200)
-                    .attr('r', 30)
-                    .attr('fill', '#7c3aed');
-                
-                showNodeInfo(d, data);
-            })
-            .on('mouseleave', function(event, d) {
-                d3.select(this).select('circle')
-                    .transition()
-                    .duration(200)
-                    .attr('r', 25)
-                    .attr('fill', '#4f46e5');
-            });
-
-            // Add hover effects to links
-            link.on('mouseenter', function(event, d) {
-                d3.select(this)
-                    .transition()
-                    .duration(200)
-                    .attr('stroke-width', Math.max(4, Math.max(Math.abs(d.sourceScore - 0.5), Math.abs(d.targetScore - 0.5)) * 10));
-                
-                showLinkInfo(d);
-            })
-            .on('mouseleave', function(event, d) {
-                d3.select(this)
-                    .transition()
-                    .duration(200)
-                    .attr('stroke-width', Math.max(2, Math.max(Math.abs(d.sourceScore - 0.5), Math.abs(d.targetScore - 0.5)) * 8));
-            });
-
-            // Update positions on tick and gradients
-            simulation.on('tick', () => {
-                // Update link positions
+            // Update positions on tick
+            simulation.on("tick", () => {
                 link
-                    .attr('x1', d => d.source.x)
-                    .attr('y1', d => d.source.y)
-                    .attr('x2', d => d.target.x)
-                    .attr('y2', d => d.target.y);
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
 
-                // Update gradient coordinates to follow the links
-                links.forEach((linkData, i) => {
-                    const gradient = defs.select(`#gradient-${i}`);
-                    gradient
-                        .attr('x1', linkData.source.x)
-                        .attr('y1', linkData.source.y)
-                        .attr('x2', linkData.target.x)
-                        .attr('y2', linkData.target.y);
+                // Update gradient positions
+                links.forEach((d, i) => {
+                    defs.select(`#gradient-${i}`)
+                        .attr("x1", d.source.x)
+                        .attr("y1", d.source.y)
+                        .attr("x2", d.target.x)
+                        .attr("y2", d.target.y);
                 });
 
                 node
-                    .attr('transform', d => `translate(${d.x},${d.y})`);
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+
+                labels_g
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y);
             });
+
+            // Update info panel
+            document.getElementById("graphInfo").textContent = 
+                `Showing ${nodes.length} options with ${links.length} preference relationships`;
+
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
         }
 
-        function showNodeInfo(node, data) {
-            const nodeData = data.nodes.find(n => n.key === node.id);
-            const nodeInfo = document.getElementById('nodeInfo');
-            const nodeDetails = document.getElementById('nodeDetails');
-            
-            let html = `<strong>Option:</strong> ${node.label}<br><br><strong>Preferences:</strong><br>`;
-            
-            nodeData.edges.forEach(edge => {
-                const targetLabel = labelMap[edge.to_key] || edge.to_key;
-                const preference = edge.score > 0.5 ? 'prefers' : edge.score < 0.5 ? 'dislikes' : 'neutral';
-                const strength = Math.abs(edge.score - 0.5);
-                const percentage = (edge.score * 100).toFixed(1);
-                
-                html += `→ ${targetLabel}: ${percentage}% (${preference})<br>`;
-            });
-            
-            nodeDetails.innerHTML = html;
-            nodeInfo.style.display = 'block';
+        function loadSampleData() {
+            renderGraph(sampleData, pizzaLabels);
         }
 
-        function showLinkInfo(link) {
-            const nodeInfo = document.getElementById('nodeInfo');
-            const nodeDetails = document.getElementById('nodeDetails');
-            
-            const sourceLabel = labelMap[link.source.id] || link.source.id;
-            const targetLabel = labelMap[link.target.id] || link.target.id;
-            const sourcePercentage = (link.sourceScore * 100).toFixed(1);
-            const targetPercentage = (link.targetScore * 100).toFixed(1);
-            
-            const sourcePreference = link.sourceScore > 0.6 ? 'prefers' : 
-                                   link.sourceScore < 0.4 ? 'dislikes' : 'neutral';
-            const targetPreference = link.targetScore > 0.6 ? 'prefers' : 
-                                   link.targetScore < 0.4 ? 'dislikes' : 'neutral';
-            
-            nodeDetails.innerHTML = `
-                <strong>Bidirectional Preferences</strong><br><br>
-                <span style="color: ${link.sourceScore > 0.6 ? '#22c55e' : link.sourceScore < 0.4 ? '#ef4444' : '#6b7280'}">
-                    ${sourceLabel} → ${targetLabel}: ${sourcePercentage}% (${sourcePreference})
-                </span><br>
-                <span style="color: ${link.targetScore > 0.6 ? '#22c55e' : link.targetScore < 0.4 ? '#ef4444' : '#6b7280'}">
-                    ${targetLabel} → ${sourceLabel}: ${targetPercentage}% (${targetPreference})
-                </span>
-            `;
-            nodeInfo.style.display = 'block';
+        function parseDataFromText(text) {
+            try {
+                // Try JSON first
+                return JSON.parse(text);
+            } catch (e) {
+                // Try to extract JSON from DOT file
+                const rawDataMatch = text.match(/=====================RAW DATA==========([\s\S]*?)$/);
+                if (rawDataMatch) {
+                    const jsonText = rawDataMatch[1].trim().replace(/'/g, '"');
+                    return JSON.parse(jsonText);
+                }
+                throw new Error("Could not parse data format");
+            }
         }
 
-        function dragstarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        }
+        // File input handler
+        document.getElementById("fileInput").addEventListener("change", function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-        function dragged(event, d) {
-            d.fx = event.x;
-            d.fy = event.y;
-        }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = parseDataFromText(e.target.result);
+                    renderGraph(data);
+                } catch (error) {
+                    alert("Error loading file: " + error.message);
+                }
+            };
+            reader.readAsText(file);
+        });
 
-        function dragended(event, d) {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-        }
+        // Handle window resize
+        window.addEventListener("resize", () => {
+            if (simulation) {
+                const width = svg.node().getBoundingClientRect().width;
+                const height = svg.node().getBoundingClientRect().height;
+                svg.attr("viewBox", [0, 0, width, height]);
+                simulation.force("center", d3.forceCenter(width / 2, height / 2));
+                simulation.alpha(0.3).restart();
+            }
+        });
 
         // Load sample data on page load
-        window.addEventListener('load', () => {
-            loadSampleData();
-            visualizeData();
-        });
+        loadSampleData();
     </script>
 </body>
 </html>
