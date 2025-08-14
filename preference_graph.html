@@ -271,18 +271,18 @@
         };
 
         function getPreferenceColor(score) {
-            if (Math.abs(score - 0.5) < 0.02) return "#747d8c"; // Gray for neutral
-            
-            // Create gradient from red (strong against) to green (strong for)
-            if (score < 0.5) {
-                // Red to orange (0 to 0.5)
-                const t = score * 2; // 0 to 1
-                return d3.interpolateRgb("#c90011", "#0eff66")(t);
-            } else {
-                // Gray to green (0.5 to 1)
-                const t = (score - 0.5) * 2; // 0 to 1
+            if (score < 0.25) {
+                // Red to gray (0 to 0.25)
+                const t = score * 2.5; // 0 to 1
+                return d3.interpolateRgb("#c90011", "#727272")(t);
+            } else if (score < 0.5) {
+                return "#727272"; // Gray for neutral
+            } else if (score < 0.9) {
+                // Gray to green (0.5 to 0.9)
+                const t = (score - 0.5) * 2.5; // 0 to 1
                 return d3.interpolateRgb("#727272", "#0eff67")(t);
             }
+            return "#0eff67"; // green
         }
 
         function processPreferenceData(data, labels = null) {
